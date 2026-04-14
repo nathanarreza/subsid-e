@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="subsid-e — Centralized Philippine Government Subsidy Portal. Find assistance from DSWD, DOLE, PhilHealth, SSS, and more." />
+  <meta property="og:title" content="subsid-e — Philippine Subsidy Portal" />
+  <meta property="og:description" content="Unified gateway to all Philippine government assistance programs, powered by Gemini AI with live grounding." />
+  <title>subsid-e — Philippine Subsidy Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+
+  <!-- ── HEADER ───────────────────────────────────────── -->
+  <header class="header" role="banner">
+    <div class="header-inner">
+      <a class="logo" href="/" aria-label="subsid-e home">
+        <div class="logo-icon" aria-hidden="true">s·e</div>
+        <div>
+          <div class="logo-text">subsid<span>-e</span></div>
+          <span class="logo-sub">Philippine Subsidy Portal</span>
+        </div>
+      </a>
+
+      <nav aria-label="Main navigation">
+        <button class="nav-btn active" data-section="directory" aria-current="page">Directory</button>
+        <button class="nav-btn" data-section="news">Live Updates</button>
+        <button class="nav-btn" data-section="assistant">AI Assistant</button>
+      </nav>
+
+      <div class="header-actions">
+        <div class="server-status" id="serverStatus" title="Backend API status">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusLabel">Checking…</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── HERO ─────────────────────────────────────────── -->
+  <section class="hero" aria-label="Hero section">
+    <div class="hero-inner">
+      <div class="ph-badge" aria-label="Republic of the Philippines">
+        <span class="ph-badge-flag" aria-hidden="true">🇵🇭</span>
+        <span class="ph-badge-text">Republic of the Philippines</span>
+      </div>
+
+      <h1>Your <em>unified</em> gateway to<br />Philippine subsidies</h1>
+      <p>Search, discover, and verify government assistance programs across all agencies — from DSWD to DOLE, PhilHealth, and beyond.</p>
+
+      <div class="hero-search" role="search">
+        <label for="heroSearch" class="sr-only">Search subsidies</label>
+        <input
+          type="search"
+          id="heroSearch"
+          placeholder="Search subsidies, programs, agencies…"
+          autocomplete="off"
+          aria-label="Search subsidies"
+        />
+        <button class="btn-gold" id="heroSearchBtn">Search</button>
+      </div>
+
+      <div class="hero-stats" aria-label="Statistics">
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="statTotal">38<span>+</span></div>
+          <div class="hero-stat-label">Programs Listed</div>
+        </div>
+        <div class="hero-stat-sep" aria-hidden="true"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">10<span>+</span></div>
+          <div class="hero-stat-label">Gov't Agencies</div>
+        </div>
+        <div class="hero-stat-sep" aria-hidden="true"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">₱<span>Billions</span></div>
+          <div class="hero-stat-label">in Available Aid</div>
+        </div>
+        <div class="hero-stat-sep" aria-hidden="true"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="modelBadge">Gemma<span> 3</span></div>
+          <div class="hero-stat-label">AI-Powered</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CATEGORY PILLS ───────────────────────────────── -->
+  <div class="categories-bar" role="navigation" aria-label="Filter by category">
+    <div class="categories-inner" id="catPills">
+      <button class="cat-pill active" data-cat="all">All Programs</button>
+      <button class="cat-pill" data-cat="cash">💰 Cash Assistance</button>
+      <button class="cat-pill" data-cat="health">🏥 Health</button>
+      <button class="cat-pill" data-cat="education">📚 Education</button>
+      <button class="cat-pill" data-cat="livelihood">🛠 Livelihood</button>
+      <button class="cat-pill" data-cat="agriculture">🌾 Agriculture</button>
+      <button class="cat-pill" data-cat="housing">🏠 Housing</button>
+      <button class="cat-pill" data-cat="disaster">🆘 Disaster Relief</button>
+      <button class="cat-pill" data-cat="pension">👴 Pension</button>
+      <button class="cat-pill" data-cat="senior">🧓 Senior Citizen</button>
+      <button class="cat-pill" data-cat="pwd">♿ PWD</button>
+      <button class="cat-pill" data-cat="youth">🎓 Youth</button>
+    </div>
+  </div>
+
+  <!-- ── MAIN LAYOUT ────────────────────────────────────── -->
+  <main class="main-layout" id="mainLayout">
+
+    <!-- SUBSIDY DIRECTORY -->
+    <aside class="panel" id="sectionDirectory" aria-label="Subsidy directory">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <div class="panel-icon blue" aria-hidden="true">📋</div>
+          <div>
+            <div class="panel-title">Subsidy Directory</div>
+            <div class="panel-sub" id="directoryCount">38 programs across all agencies</div>
+          </div>
+        </div>
+      </div>
+      <div class="subsidy-search">
+        <label for="sidebarSearch" class="sr-only">Filter programs</label>
+        <input type="search" id="sidebarSearch" placeholder="Filter programs…" autocomplete="off" />
+      </div>
+      <div class="subsidy-list" id="subsidyList" role="list" aria-label="Subsidy programs"></div>
+    </aside>
+
+    <!-- LIVE NEWS PANEL -->
+    <section class="panel panel-news" id="sectionNews" aria-label="Live subsidy news">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <div class="panel-icon red" aria-hidden="true">📡</div>
+          <div>
+            <div class="panel-title">Live Subsidy Updates</div>
+            <div class="panel-sub">Gemini + Google Search Grounding — runs server-side</div>
+          </div>
+        </div>
+        <span class="panel-badge live pulse" id="liveIndicator" aria-live="polite">● LIVE</span>
+      </div>
+
+      <div class="news-fetch-area">
+        <div class="news-query-row">
+          <label for="newsQuery" class="sr-only">News search topic</label>
+          <input type="text" id="newsQuery" value="Philippine government subsidy programs 2025" placeholder="News topic…" />
+          <button class="btn-primary" id="fetchNewsBtn">🔍 Fetch News</button>
+        </div>
+        <div class="news-presets" id="newsPresets">
+          <button class="preset-chip" data-query="4Ps Pantawid Pamilya 2025 updates">4Ps Updates</button>
+          <button class="preset-chip" data-query="TUPAD DOLE 2025 application">TUPAD</button>
+          <button class="preset-chip" data-query="PhilHealth benefits 2025">PhilHealth</button>
+          <button class="preset-chip" data-query="DSWD cash aid distribution 2025">DSWD Cash Aid</button>
+          <button class="preset-chip" data-query="DA farm subsidy Philippines 2025">Farm Aid</button>
+          <button class="preset-chip" data-query="SSS benefits 2025 Philippines">SSS</button>
+        </div>
+      </div>
+
+      <div id="newsFeed" aria-live="polite" aria-label="News results">
+        <div class="news-empty">
+          <div class="news-empty-icon" aria-hidden="true">📡</div>
+          <div class="news-empty-title">Click Fetch News to load live updates</div>
+          <div class="news-empty-sub">The server connects to Google Search grounding via Gemini, returning real-time Philippine subsidy news with source citations.</div>
+        </div>
+      </div>
+
+      <div id="groundingPanel" class="news-groundings hidden" aria-label="Grounding sources">
+        <div class="groundings-label">Grounding Sources</div>
+        <div class="grounding-chips" id="groundingChips" role="list"></div>
+      </div>
+    </section>
+
+    <!-- AI ASSISTANT PANEL -->
+    <aside class="panel panel-chat" id="sectionAssistant" aria-label="AI subsidy assistant">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <div class="panel-icon gold" aria-hidden="true">🤖</div>
+          <div>
+            <div class="panel-title">Subsidy AI Assistant</div>
+            <div class="panel-sub" id="chatModelLabel">Gemma 3 1B + Google Grounding</div>
+          </div>
+        </div>
+        <span class="panel-badge grounded hidden" id="chatGroundingBadge">Grounded</span>
+      </div>
+
+      <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Chat history">
+        <div class="msg ai">
+          <div class="msg-avatar ai" aria-hidden="true">🇵🇭</div>
+          <div class="msg-bubble">
+            Magandang araw, kababayan! I'm your <strong>subsid-e</strong> assistant.<br /><br />
+            I can help you find Philippine government subsidies, check eligibility, and guide you through the application process — for programs from DSWD, DOLE, PhilHealth, SSS, and many more.<br /><br />
+            Ano ang maari kitang matulungan? What can I help you with?
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="chat-input-row">
+          <label for="chatInput" class="sr-only">Chat message</label>
+          <textarea
+            id="chatInput"
+            placeholder="Ask about any subsidy program…"
+            rows="1"
+            aria-label="Type your message"
+          ></textarea>
+          <button class="chat-send-btn" id="chatSendBtn" aria-label="Send message">➤</button>
+        </div>
+        <div class="chat-quick-btns" role="list" aria-label="Quick questions">
+          <button class="quick-btn" data-q="Am I eligible for the 4Ps Pantawid program?">4Ps eligibility</button>
+          <button class="quick-btn" data-q="What is TUPAD and how do I apply?">TUPAD</button>
+          <button class="quick-btn" data-q="How do I claim PhilHealth benefits?">PhilHealth</button>
+          <button class="quick-btn" data-q="What subsidies are available for farmers?">Farmer aid</button>
+          <button class="quick-btn" data-q="What cash assistance is available for poor families in the Philippines?">Cash aid</button>
+          <button class="quick-btn" data-q="How do I apply for SSS unemployment benefit?">SSS</button>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ── SUBSIDY DETAIL MODAL ───────────────────────── -->
+  <div
+    class="detail-overlay hidden"
+    id="detailOverlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="dTitle"
+    tabindex="-1"
+  >
+    <div class="detail-card">
+      <div class="detail-header-bg">
+        <button class="detail-close" id="detailClose" aria-label="Close details">×</button>
+        <div class="detail-agency-badge" id="dAgency"></div>
+        <div class="detail-title" id="dTitle"></div>
+        <div class="detail-status-row" id="dStatusRow"></div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <div class="detail-section-title">About this Program</div>
+          <div class="detail-desc" id="dDesc"></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-grid" id="dGrid"></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">Eligibility Requirements</div>
+          <div class="detail-desc" id="dElig"></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">Required Documents</div>
+          <div class="detail-desc" id="dDocs"></div>
+        </div>
+        <a id="dLink" class="detail-link" href="#" target="_blank" rel="noopener noreferrer">
+          Visit Official Page ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FOOTER ─────────────────────────────────────────── -->
+  <footer role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-agencies" aria-label="Source agencies">
+        <span class="footer-agency-chip">DSWD</span>
+        <span class="footer-agency-chip">DOLE</span>
+        <span class="footer-agency-chip">DOH / PhilHealth</span>
+        <span class="footer-agency-chip">SSS</span>
+        <span class="footer-agency-chip">Pag-IBIG</span>
+        <span class="footer-agency-chip">CHED</span>
+        <span class="footer-agency-chip">DA</span>
+        <span class="footer-agency-chip">DOST</span>
+        <span class="footer-agency-chip">DTI</span>
+        <span class="footer-agency-chip">GSIS</span>
+      </div>
+      <p><strong>subsid-e</strong> — Centralizing Philippine Government Subsidy Information</p>
+      <p>Information sourced from official government agencies. Always verify eligibility with the relevant agency. AI responses are for guidance only and do not constitute official government advice.</p>
+    </div>
+  </footer>
+
+  <script src="/js/app.js" defer></script>
+</body>
+</html>
