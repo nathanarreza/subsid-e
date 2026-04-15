@@ -2,13 +2,14 @@
 
 const { VertexAI, HarmCategory, HarmBlockThreshold } = require('@google-cloud/vertexai');
 
-// Configure these via Environment Variables in GCP Console
-const project = process.env.GCP_PROJECT_ID || 'project-1e6f195c-270b-410c-94c';
-const location = process.env.GCP_LOCATION || 'asia-southeast1';
+// Clean up the project ID to prevent the "concatenation" bug
+const rawProject = process.env.GCP_PROJECT_ID || 'project-1e6f195c-270b-410c-94c';
+const project = rawProject.split(' ')[0].trim(); // Takes only the ID, ignores any text after it
+
+const location = 'us-central1';
 
 // Initialize Vertex AI
 const vertexAI = new VertexAI({ project: project, location: location });
-
 /**
  * Core Vertex AI Call
  */
