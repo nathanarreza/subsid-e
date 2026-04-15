@@ -27,8 +27,8 @@ const {
 // Upgraded to Gemma 4 31B with native search grounding support
 // Inside api/news.js
 // Use these names for Vertex AI
-const GROUND_MODEL = 'gemini-1.5-flash-002'; // Vertex name for Flash
-const MODEL        = 'gemini-1.5-flash-002';
+const GROUND_MODEL = 'gemini-2.0-flash'; // High-speed, high-quality
+const MODEL        = 'gemini-2.0-flash';
 const MAX_TOKENS   = parseInt(process.env.NEWS_MAX_TOKENS || '800', 10);
 
 
