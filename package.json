@@ -10,5 +10,13 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2"
+  },
+
+  "scripts": {
+    "ship": "npm run ship:api-build && npm run ship:api-deploy && npm run ship:web",
+    "ship:api-build": "gcloud builds submit --tag asia-southeast1-docker.pkg.dev/project-1e6f195c-270b-410c-94c/subsid-e-repo/subsid-e-api",
+    "ship:api-deploy": "gcloud run deploy subsid-e-api --image asia-southeast1-docker.pkg.dev/project-1e6f195c-270b-410c-94c/subsid-e-repo/subsid-e-api --region asia-southeast1 --allow-unauthenticated --set-env-vars=\"GCP_PROJECT_ID=project-1e6f195c-270b-410c-94c,GCP_LOCATION=us-central1\" --timeout=120 --memory=512Mi",
+    "ship:web": "vercel --prod"
   }
+
 }

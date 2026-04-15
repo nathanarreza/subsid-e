@@ -14,34 +14,34 @@ const vertexAI = new VertexAI({ project: project, location: location });
  * Core Vertex AI Call
  */
 async function callGemini(modelName, payload, useGrounding = false) {
-  // 1. Get the generative model
+  // Use the specific model instance
   const generativeModel = vertexAI.getGenerativeModel({
     model: modelName,
-    safetySettings: [{
-      category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-      threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-    }],
     generationConfig: payload.generationConfig || { maxOutputTokens: 1000, temperature: 0.5 },
   });
 
-  // 2. Add Grounding Tool if requested
-  const tools = useGrounding ? [{ googleSearchRetrieval: {} }] : [];
-
-  // 3. Prepare the request
-  // Vertex AI expects contents as an array of objects
+  // Correct Tool definition for Vertex AI Search Grounding
   const request = {
     contents: payload.contents,
-    tools: tools,
   };
+
+  if (useGrounding) {
+    request.tools = [{ googleSearchRetrieval: {} }];
+  }
 
   const result = await generativeModel.generateContent(request);
   const response = await result.response;
   
-  // Return in a format compatible with your existing extractText/extractGrounding helpers
+  // LOG THE RAW RESPONSE TO YOUR SERVER CONSOLE
+  // This is vital to see if Google is rejecting your search request
+  console.log("--- RAW AI RESPONSE ---");
+  console.log(JSON.stringify(response, null, 2));
+
   return {
     data: response, 
     model: modelName,
-    keyIndex: 'VertexAI-Service-Account'
+    // Check if grounding metadata actually exists in the response
+    grounded: !!(response.candidates?.[0]?.groundingMetadata)
   };
 }
 
@@ -52,7 +52,12 @@ async function callGeminiWithOptionalGrounding(model, payload, useGrounding) {
 
 // Helpers to maintain compatibility with your current code
 function extractText(response) {
-  return response.candidates[0].content.parts[0].text || '';
+  try {
+    return response.candidates[0].content.parts[0].text;
+  } catch (e) {
+    console.error("Text extraction failed:", e);
+    return "Error: AI returned empty content.";
+  }
 }
 
 function extractGrounding(response) {

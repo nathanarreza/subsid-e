@@ -11,7 +11,11 @@ const {
 // Set for Gemini 2.5 Flash
 const GROUND_MODEL = "gemini-2.5-flash"; 
 const MODEL        = "gemini-2.5-flash";
-const MAX_TOKENS   = parseInt(process.env.NEWS_MAX_TOKENS || '1000', 10);
+// Change this line:
+// const MAX_TOKENS = parseInt(process.env.NEWS_MAX_TOKENS || '1000', 10);
+
+// To this (Hardcoded for testing):
+const MAX_TOKENS = 20000;
 
 function buildNewsPrompt(query) {
   const today = new Date().toLocaleDateString('en-US', { 
@@ -21,20 +25,22 @@ function buildNewsPrompt(query) {
     day: 'numeric' 
   });
 
-  return `You are an expert news analyst for the SubsidE portal.
-Today's date is ${today}.
+  return `You are the Lead Reporter for SubsidE. 
+Current Date: ${today}.
 
-TASK: Search for and provide a detailed news briefing about: "${query}" in the Philippines.
+REPORTING TASK:
+Search the web and write a 300-word news briefing about: "${query}".
 
-FORMAT REQUIREMENTS:
-Provide 3-5 news items. For each item:
-1. Headline (Factual and clear)
-2. Source & Date
-3. Summary (2-3 detailed sentences)
+STRUCTURE:
+- Use H3 headers for each news story.
+- Include the specific date of the news.
+- Use bullet points for eligibility updates.
 
-FOCUS: DSWD assistance, DOLE TUPAD, PhilHealth updates, or any Philippine government subsidy announcements from 2025-2026.
-STYLE: Journalistic, compassionate, and Taglish-friendly.
-CRITICAL: Do not just say "Good" or "Okay". Provide the full report based on your search results.`;
+DATA REQUIREMENT:
+You must provide real news from 2025 and 2026. 
+If you cannot find specific news for this query, summarize the CURRENT 2026 general status of Philippine government social protection (4Ps/TUPAD) based on your internal knowledge. 
+
+DO NOT output a single word. You must provide at least 3 paragraphs.`;
 }
 
 module.exports = async function handler(req, res) {
@@ -58,27 +64,24 @@ module.exports = async function handler(req, res) {
   };
 
   // Attempt 1: Vertex AI Grounding + Google Search
+  // ... inside handler
   try {
-    // 🌟 IMPORTANT: In our Vertex _gemini.js, we pass 'true' as the 3rd argument
-    // to trigger the correct googleSearchRetrieval tool.
-    const { data, keyIndex } = await callGemini(GROUND_MODEL, payload, true);
-    
+    const { data, grounded } = await callGemini(GROUND_MODEL, payload, true);
     const text = extractText(data);
-    const grounding = extractGrounding(data);
 
-    // If the text is too short (like "Good"), we treat it as a failure and go to fallback
-    if (!text || text.length < 10) {
-       throw new Error("AI returned insufficient content");
+    // CRITICAL: If the model says "Good" or is too short, force the fallback
+    if (text.length < 50) {
+       throw new Error("Response too short - likely a placeholder.");
     }
 
     return res.status(200).json({
-      text:              text,
-      groundingMetadata: grounding,
-      grounded:          !!grounding,
-      model:             GROUND_MODEL,
-      keyIndex,
+      text: text,
+      groundingMetadata: extractGrounding(data),
+      grounded: grounded, // Use the actual status from the tool
+      model: GROUND_MODEL
     });
   } catch (groundErr) {
+    // ... Fallback logic
     console.warn(`[subsid-e/news] Grounding failed: ${groundErr.message}. Falling back...`);
   }
 

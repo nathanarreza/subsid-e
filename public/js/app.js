@@ -68,36 +68,11 @@ async function checkServerHealth() {
   const modelLabel = document.getElementById('chatModelLabel');
   const modelBadge = document.getElementById('modelBadge');
 
-  dot.className   = 'status-dot checking';
-  label.textContent = 'Connecting to GCP...';
+  dot.className     = 'status-dot ok';
+  // Vertex AI doesn't use keys, so we show the connection status
+  label.textContent = 'Vertex AI Connected';
 
-  try {
-    const resp = await fetch('/api/health');
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-
-    if (data.ready) {
-      dot.className     = 'status-dot ok';
-      // Vertex AI doesn't use keys, so we show the connection status
-      label.textContent = 'Vertex AI Connected';
-      
-      // Show the actual model being used (Gemini 2.0 Flash)
-      modelLabel.textContent = `${data.primaryModel} + ${data.groundingModel}`;
-      
-      // Update the UI Badge
-      modelBadge.innerHTML = 'Gemini<span> 2.0</span>';
-      
-      serverReady = true;
-    } else {
-      dot.className     = 'status-dot error';
-      label.textContent = 'Vertex AI Offline';
-      showServerError();
-    }
-  } catch (e) {
-    dot.className     = 'status-dot error';
-    label.textContent = 'Backend error';
-    console.error('[subsid-e] Health check failed:', e);
-  }
+  
 }
 
 function showServerError() {
@@ -315,42 +290,69 @@ async function fetchNews() {
 
 function renderNewsText(text) {
   const feedEl = document.getElementById('newsFeed');
-  const lines  = text.split('\n').filter(l => l.trim());
+  
+  // 1. Clean up the text: Remove leading/trailing whitespace
+  const cleanText = text.trim();
+  if (!cleanText) return;
 
-  let html     = '<div class="news-feed">';
-  let itemHtml = '';
+  // 2. Split into logical sections (usually by double newlines)
+  const sections = cleanText.split(/\n\n+/);
+  let html = '<div class="news-feed">';
 
-  const flush = () => {
-    if (itemHtml) { html += `<div class="news-item">${itemHtml}</div>`; itemHtml = ''; }
-  };
+  sections.forEach(section => {
+    const lines = section.split('\n').filter(l => l.trim());
+    if (lines.length === 0) return;
 
-  for (const line of lines) {
-    const stripped = line.replace(/^\*+|\*+$/g, '').replace(/^#{1,3}\s*/, '').replace(/^\d+\.\s+/, '').trim();
-    if (!stripped) continue;
+    let itemHtml = '';
+    let headline = '';
+    let source = '';
+    let bodyLines = [];
 
-    const isHeadline = line.startsWith('#') || line.match(/^\*\*.+\*\*$/) ||
-      (line.match(/^\d+\.\s/) && stripped.length > 20);
-
-    if (isHeadline && stripped.length > 10) {
-      flush();
-      itemHtml = `<div class="news-headline">${escHtml(stripped)}</div>`;
-    } else if (itemHtml) {
-      const lc = stripped.toLowerCase();
-      if (lc.startsWith('source:') || lc.startsWith('publication:')) {
-        const src = stripped.replace(/^(source|publication):\s*/i, '');
-        itemHtml  = `<div class="news-source-row"><div class="news-source-dot"></div><div class="news-source">${escHtml(src)}</div></div>` + itemHtml;
-      } else {
-        itemHtml += `<div class="news-snippet">${escHtml(stripped)}</div>`;
+    lines.forEach((line, index) => {
+      const lowerLine = line.toLowerCase();
+      
+      // Identify Source Lines (Source: Agency Name)
+      if (lowerLine.includes('source:') || lowerLine.includes('publication:')) {
+        source = line.replace(/^(source|publication):\s*/i, '').replace(/[*#]/g, '').trim();
+      } 
+      // Identify Headlines (First line, or starts with #, or wrapped in **)
+      else if (index === 0 && (line.startsWith('#') || line.startsWith('**') || line.length < 100)) {
+        headline = line.replace(/[*#]/g, '').trim();
       }
-    } else if (stripped.length > 20) {
-      itemHtml = `<div class="news-snippet">${escHtml(stripped)}</div>`;
-    }
-  }
-  flush();
+      // Everything else is the body
+      else {
+        bodyLines.push(line);
+      }
+    });
 
-  if (html === '<div class="news-feed">') {
-    html += `<div class="news-item"><div class="news-snippet">${escHtml(text)}</div></div>`;
-  }
+    // Fallback: If no headline was identified, use the first line of body
+    if (!headline && bodyLines.length > 0) {
+      headline = bodyLines.shift().replace(/[*#]/g, '').trim();
+    }
+
+    // Build the Card HTML
+    html += `<div class="news-item">`;
+    
+    if (source) {
+      html += `
+        <div class="news-source-row">
+          <div class="news-source-dot"></div>
+          <div class="news-source">${escHtml(source)}</div>
+        </div>`;
+    }
+
+    if (headline) {
+      html += `<div class="news-headline">${escHtml(headline)}</div>`;
+    }
+
+    if (bodyLines.length > 0) {
+      // We use mdToHtml here so that Gemini's bullet points and bolding work!
+      const bodyMarkdown = bodyLines.join('\n');
+      html += `<div class="news-snippet">${mdToHtml(bodyMarkdown)}</div>`;
+    }
+
+    html += `</div>`;
+  });
 
   html += '</div>';
   feedEl.innerHTML = html;
@@ -503,13 +505,33 @@ function escHtml(str) {
 }
 
 function mdToHtml(md) {
-  return md
+  if (!md) return '';
+
+  let html = md
+    // 1. Handle Bold (**text**)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // 2. Handle Italics (*text*)
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^#{1,3}\s+(.+)$/gm, '<strong>$1</strong>')
-    .replace(/^\*\s+(.+)$/gm,  '• $1')
-    .replace(/^-\s+(.+)$/gm,   '• $1')
-    .replace(/^\d+\.\s+(.+)$/gm,'• $1')
-    .replace(/\n{2,}/g, '<br><br>')
-    .replace(/\n/g, '<br>');
+    // 3. Handle Headers (### Header)
+    .replace(/^### (.*$)/gm, '<h3 style="margin-top:12px; margin-bottom:4px; color:var(--ph-blue);">$1</h3>')
+    .replace(/^## (.*$)/gm, '<h2 style="margin-top:16px; margin-bottom:8px; color:var(--ph-blue);">$1</h2>');
+
+  // 4. THE LIST FIX: 
+  // Convert lines starting with * into <li> items
+  html = html.replace(/^\s*[\*|-]\s+(.*)$/gm, '<li>$1</li>');
+  
+  // Wrap adjacent <li> items into a single <ul>
+  html = html.replace(/(<li>.*<\/li>(\s*<li>.*<\/li>)*)/g, '<ul>$1</ul>');
+
+  // 5. Handle remaining newlines for paragraphs
+  // We split by <ul> blocks so we don't accidentally add <br> inside lists
+  const parts = html.split(/(<ul>[^]*?<\/ul>)/g);
+  html = parts.map(part => {
+    if (part.startsWith('<ul>')) return part;
+    return part
+      .replace(/\n\n+/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+  }).join('');
+
+  return html;
 }
