@@ -10,8 +10,9 @@ const {
 } = require('./_gemini');
 
 // I strongly recommend using gemini-2.0-flash for grounding. It is 10x faster and prevents timeouts.
-const GROUND_MODEL   = process.env.GEMINI_GROUNDING_MODEL || 'gemini-2.0-flash';
-const MODEL          = process.env.GEMINI_MODEL          || 'gemini-2.0-flash-lite'; 
+// Use these names for Vertex AI
+const GROUND_MODEL = 'gemini-1.5-flash-002'; // Vertex name for Flash
+const MODEL        = 'gemini-1.5-flash-002';
 const MAX_TOKENS     = parseInt(process.env.CHAT_MAX_TOKENS || '800', 10);
 
 const SYSTEM_PROMPT = `Your name is SubsidE Assistant. You are a specialized expert on Philippine government subsidy and assistance programs. 

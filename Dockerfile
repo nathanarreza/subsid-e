@@ -1,17 +1,18 @@
-# Use Node 20
 FROM node:20-slim
-
-# Create app directory
 WORKDIR /usr/src/app
 
-# Copy package files first (for caching)
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (This creates the node_modules folder)
 RUN npm install --production
 
-# Copy the rest of the code (api, public, server.js)
+# DEBUG: This will print the contents of node_modules in your terminal
+# so we can prove express was installed
+RUN ls node_modules/express
+
+# Copy the rest of your files
 COPY . .
 
-# Start the server
+EXPOSE 8080
 CMD [ "node", "server.js" ]
