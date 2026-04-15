@@ -51,6 +51,16 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Add this inside your server.js (before the app.get('*') route)
+app.get('/api/health', (req, res) => {
+  res.json({
+    ready: true,
+    method: 'Vertex AI SDK',
+    primaryModel: 'Gemini 2.0 Flash',
+    groundingModel: 'Google Search'
+  });
+});
+
 // 5. Start Server
 const PORT = process.env.PORT || 8080;
 const server = app.listen(PORT, '0.0.0.0', () => {

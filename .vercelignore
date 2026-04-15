@@ -1,0 +1,5 @@
+api/
+server.js
+Dockerfile
+node_modules/
+.env

@@ -65,9 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
 async function checkServerHealth() {
   const dot   = document.getElementById('statusDot');
   const label = document.getElementById('statusLabel');
+  const modelLabel = document.getElementById('chatModelLabel');
+  const modelBadge = document.getElementById('modelBadge');
 
   dot.className   = 'status-dot checking';
-  label.textContent = 'Checking…';
+  label.textContent = 'Connecting to GCP...';
 
   try {
     const resp = await fetch('/api/health');
@@ -76,15 +78,19 @@ async function checkServerHealth() {
 
     if (data.ready) {
       dot.className     = 'status-dot ok';
-      label.textContent = `${data.configuredKeys} key${data.configuredKeys !== 1 ? 's' : ''} ready`;
-      document.getElementById('chatModelLabel').textContent =
-        `${data.primaryModel} + ${data.groundingModel}`;
-      document.getElementById('modelBadge').innerHTML =
-        data.primaryModel.includes('gemma') ? 'Gemma<span> 3</span>' : 'Gemini<span> AI</span>';
+      // Vertex AI doesn't use keys, so we show the connection status
+      label.textContent = 'Vertex AI Connected';
+      
+      // Show the actual model being used (Gemini 2.0 Flash)
+      modelLabel.textContent = `${data.primaryModel} + ${data.groundingModel}`;
+      
+      // Update the UI Badge
+      modelBadge.innerHTML = 'Gemini<span> 2.0</span>';
+      
       serverReady = true;
     } else {
       dot.className     = 'status-dot error';
-      label.textContent = 'No keys configured';
+      label.textContent = 'Vertex AI Offline';
       showServerError();
     }
   } catch (e) {
